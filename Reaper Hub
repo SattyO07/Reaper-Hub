@@ -1,0 +1,274 @@
+local plrs = game.Players
+local playerNames = {}
+local selectedPlayer
+
+--Function
+local function updatePlayerNames()
+    playerNames = {}
+    local players = plrs:GetPlayers()
+
+    for _, player in ipairs(players) do
+        table.insert(playerNames, player.Name)
+    end
+end
+
+-- Library
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/Unknownkellymc1/Orion/main/source')))()
+
+local Sense = loadstring(game:HttpGet('https://sirius.menu/sense'))()
+
+-- Window
+local Window = OrionLib:MakeWindow({Name = "Reaper Hub : [" ..  game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. "]", HidePremium = false, SaveConfig = true, ConfigFolder = "ReaperSaved"})
+
+-- Tabs
+local Tab1 = Window:MakeTab({
+    Name = "Universal",
+    Icon = "rbxassetid://7733954760",
+    PremiumOnly = false
+})
+
+local Tab2 = Window:MakeTab({
+    Name = "Esp",
+    Icon = "rbxassetid://7733774602",
+    PremiumOnly = false
+})
+
+local Tab3 = Window:MakeTab({
+    Name = "AimBot",
+    Icon = "rbxassetid://7733765307",
+    PremiumOnly = false
+})
+
+local Tab4 = Window:MakeTab({
+    Name = "Info",
+    Icon = "rbxassetid://7733964719",
+    PremiumOnly = false
+})
+
+-- [universal]--
+updatePlayerNames()
+
+local selectPlayers = Tab1:AddDropdown({
+    Name = "Players",
+    Default = "No Players",
+    Options = playerNames,
+    Callback = function(selectedplrName)
+        selectedPlayer = plrs:FindFirstChild(selectedplrName)
+        teleportButton:SetEnabled(true)
+    end
+})
+
+local teleportButton = Tab1:AddButton({
+    Name = "Teleport",
+    Enabled = false,
+    Callback = function()
+        if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPosition = selectedPlayer.Character.HumanoidRootPart.Position
+            local localPlayerRoot = plrs.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            
+            if localPlayerRoot then
+                localPlayerRoot.CFrame = CFrame.new(targetPosition)
+            end
+        end
+    end
+})
+
+local copyUsernameButton = Tab1:AddButton({
+    Name = "Copy Username",
+    Callback = function()
+        if selectedPlayer then
+            setclipboard(selectedPlayer.Name)
+        end
+    end
+})
+
+local copyUserIdButton = Tab1:AddButton({
+    Name = "Copy User ID",
+    Callback = function()
+        if selectedPlayer then
+            setclipboard(tostring(selectedPlayer.UserId))
+        end
+    end
+})
+
+local Spaces1 = Tab1:AddSection({Name = ""})
+local Section2 = Tab1:AddSection({
+    Name = "Movements:"
+})
+local Slider1 = Tab1:AddSlider({
+    Name = "Set Speed",
+    Min = 0,
+    Max = 1000,
+    Default = 16,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Value",
+    Callback = function(speed)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = speed
+    end
+})
+
+local Slider2 = Tab1:AddSlider({
+    Name = "Set Jump Power",
+    Min = 0,
+    Max = 1000,
+    Default = 50,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Value",
+    Callback = function(jumpPower)
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = jumpPower
+    end
+})
+
+local Slider3 = Tab1:AddSlider({
+    Name = "Set HipHeight",
+    Min = 2,
+    Max = 300,
+    Default = 2,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Value",
+    Callback = function(hipHeight)
+        game.Players.LocalPlayer.Character.Humanoid.HipHeight = hipHeight
+    end
+})
+
+local Slider4 = Tab1:AddSlider({
+    Name = "Set Gravity",
+    Min = -100,
+    Max = 500,
+    Default = 196.2,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
+    ValueName = "Value",
+    Callback = function(Gravity)
+        game.Workspace.Gravity = Gravity
+    end
+})
+
+local Spaces2 = Tab1:AddSection({Name = ""})
+local Section3 = Tab1:AddSection({
+    Name = "Resets Movements:"
+})
+Tab1:AddButton({
+    Name = "Reset Speed",
+    Callback = function()
+        Slider1:Set(16)
+    end
+})
+
+Tab1:AddButton({
+    Name = "Reset Jump Power",
+    Callback = function()
+        Slider2:Set(50)
+    end
+})
+
+Tab1:AddButton({
+    Name = "Reset HipHeight",
+    Callback = function()
+        Slider3:Set(2)
+    end
+})
+Tab1:AddButton({
+    Name = "Reset Gravity",
+    Callback = function()
+        Slider4:Set(196.2)
+    end
+})
+
+
+Tab1:AddButton({
+    Name = "Reset all",
+    Callback = function()
+        Slider1:Set(16)
+        Slider2:Set(50)
+        Slider3:Set(2)
+        Slider4:Set(196.2)
+    end
+})
+
+local Spaces3 = Tab1:AddSection({Name = ""})
+local Section1 = Tab1:AddSection({
+    Name = "Tools Gui:"
+})
+Tab1:AddButton({
+	Name = "Infinite Yield",
+	Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+  	end    
+})
+
+Tab1:AddButton({
+	Name = "Dex v4",
+	Callback = function()
+      		getgenv().Key = "Bash"
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Hosvile/Refinement/main/MC%3AIY%20Dex",true))()
+  	end    
+})
+
+Tab1:AddButton({
+	Name = "Remote Spy",
+	Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RS/main/SimpleSpyMobile"))()
+  	end    
+})
+--[Esp]--
+local Toggle1 = Tab2:AddToggle({
+	Name = "Enable",
+	Default = false,
+	Callback = function(A)
+		Sense.teamSettings.enemy.enabled = A
+	end    
+})
+
+local Toggle2 = Tab2:AddToggle({
+	Name = "Box",
+	Default = false,
+	Callback = function(B)
+		Sense.teamSettings.enemy.box = B
+	end    
+})
+
+local Toggle3 = Tab2:AddToggle({
+	Name = "Cham",
+	Default = false,
+	Callback = function(C)
+		Sense.teamSettings.enemy.cham = C
+	end    
+})
+
+Tab2:AddButton({
+    Name = "Load",
+    Callback = function()
+        Sense.Load()
+    end
+})
+
+--[Info]--
+local Section5 = Tab4:AddSection({
+    Name = "Game Info:"
+})
+local GameName = Tab4:AddParagraph("Game:", game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+local GameId = Tab4:AddParagraph("Game ID:", game.PlaceId)
+
+local Spaces4 = Tab4:AddSection({Name = ""})
+local Section6 = Tab4:AddSection({
+    Name = "Copy:"
+})
+Tab4:AddButton({
+    Name = "GameName",
+    Callback = function() setclipboard(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+    end    
+})
+Tab4:AddButton({
+    Name = "GameID",
+    Callback = function()
+        setclipboard(game.PlaceId)
+    end    
+})
+
+--loops--
+while wait(0.5) do 
+    updatePlayerNames()
+    selectPlayers:Refresh(playerNames, true)
+end

@@ -1,8 +1,10 @@
 local plrs = game.Players
 local playerNames = {}
 local selectedPlayer
-
+local EspLoaded = false
+local FpsText = "Fps: "
 --Function
+--[[Select players]]
 local function updatePlayerNames()
     playerNames = {}
     local players = plrs:GetPlayers()
@@ -12,6 +14,29 @@ local function updatePlayerNames()
     end
 end
 
+--[[Fps]]
+local RunService = game:GetService("RunService")
+
+local UpdateFps = 0
+local LastTime = tick()
+
+RunService.RenderStepped:Connect(function()
+    local DeltaTime = tick() - LastTime
+    LastTime = tick()
+
+    UpdateFps = math.floor(1 / DeltaTime)
+end)
+
+--[[Ping]]
+local PingText = "Ping: "
+local PingUpdate = 0
+
+local function calculatePing()
+    local startTime = tick()
+    game:GetService("Players").LocalPlayer:Kick("Ping Test")
+    local endTime = tick()
+    PingUpdate = math.floor((endTime - startTime) * 1000)
+end
 -- Library
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/Unknownkellymc1/Orion/main/source')))()
 
@@ -47,6 +72,9 @@ local Tab4 = Window:MakeTab({
 
 -- [universal]--
 updatePlayerNames()
+local Section1 = Tab1:AddSection({
+    Name = "Players:"
+})
 
 local selectPlayers = Tab1:AddDropdown({
     Name = "Players",
@@ -91,7 +119,6 @@ local copyUserIdButton = Tab1:AddButton({
     end
 })
 
-local Spaces1 = Tab1:AddSection({Name = ""})
 local Section2 = Tab1:AddSection({
     Name = "Movements:"
 })
@@ -147,7 +174,6 @@ local Slider4 = Tab1:AddSlider({
     end
 })
 
-local Spaces2 = Tab1:AddSection({Name = ""})
 local Section3 = Tab1:AddSection({
     Name = "Resets Movements:"
 })
@@ -189,8 +215,7 @@ Tab1:AddButton({
     end
 })
 
-local Spaces3 = Tab1:AddSection({Name = ""})
-local Section1 = Tab1:AddSection({
+local Section4 = Tab1:AddSection({
     Name = "Tools Gui:"
 })
 Tab1:AddButton({
@@ -212,46 +237,113 @@ Tab1:AddButton({
 	Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RS/main/SimpleSpyMobile"))()
   	end    
 })
---[Esp]--
-local Toggle1 = Tab2:AddToggle({
-	Name = "Enable",
-	Default = false,
-	Callback = function(A)
-		Sense.teamSettings.enemy.enabled = A
-	end    
+
+-- [Esp]--
+local EspLoader = Tab2:AddButton({
+    Name = "Load",
+    Callback = function()
+        if EspLoaded then
+            OrionLib:MakeNotification({
+	Name = "Esp",
+	Content = "Already Loaded",
+	Image = "rbxassetid://7733658504",
+	Time = 5
+})
+
+            return
+        end
+
+        Sense.Load()
+        wait(1)
+
+        local Section5 = Tab2:AddSection({
+            Name = "Esp:"
+        })
+
+        local Toggle1 = Tab2:AddToggle({
+            Name = "Enable",
+            Default = false,
+            Callback = function(A)
+                Sense.teamSettings.enemy.enabled = A
+                Sense.teamSettings.friendly.enabled = A
+            end    
+        })
+
+        local Section6 = Tab2:AddSection({
+    Name = "Settings:"
 })
 
 local Toggle2 = Tab2:AddToggle({
 	Name = "Box",
 	Default = false,
 	Callback = function(B)
-		Sense.teamSettings.enemy.box = B
+    Sense.teamSettings.enemy.box = B
+    Sense.teamSettings.friendly.box = B
 	end    
 })
 
 local Toggle3 = Tab2:AddToggle({
-	Name = "Cham",
+	Name = "Chams",
 	Default = false,
 	Callback = function(C)
-		Sense.teamSettings.enemy.cham = C
+		Sense.teamSettings.enemy.chams = C
+       Sense.teamSettings.friendly.chams = C
 	end    
 })
 
-Tab2:AddButton({
-    Name = "Load",
-    Callback = function()
-        Sense.Load()
+local Toggle4 = Tab2:AddToggle({
+	Name = "Team Collors",
+	Default = false,
+	Callback = function(D)
+		Sense.sharedSettings.useTeamColor = D
+	end    
+})
+
+local Section7 = Tab2:AddSection({
+    Name = "Size:"
+})
+
+
+        local Slider5 = Tab2:AddSlider({
+            Name = "Textsize",
+            Min = 0,
+            Max = 100,
+            Default = 13,
+            Color = Color3.fromRGB(255,255,255),
+            Increment = 1,
+            ValueName = "Size",
+            Callback = function(Z)
+                Sense.sharedSettings.textSize = Z
+            end    
+        })
+
+        wait(0.1)
+
+        OrionLib:MakeNotification({
+	Name = "Esp Loader",
+	Content = "Loaded",
+	Image = "rbxassetid://7733919427",
+	Time = 5
+})
+
+        EspLoaded = true
     end
 })
 
 --[Info]--
-local Section5 = Tab4:AddSection({
+local Section6 = Tab4:AddSection({
+    Name = "Device:"
+})
+local Neat = Tab4:AddLabel(FpsText .. UpdateFps)
+local Neat2 = Tab4:AddLabel(PingText .. PingUpdate)
+
+
+local Section6 = Tab4:AddSection({
     Name = "Game Info:"
 })
 local GameName = Tab4:AddParagraph("Game:", game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
 local GameId = Tab4:AddParagraph("Game ID:", game.PlaceId)
 
-local Spaces4 = Tab4:AddSection({Name = ""})
 local Section6 = Tab4:AddSection({
     Name = "Copy:"
 })
@@ -268,7 +360,17 @@ Tab4:AddButton({
 })
 
 --loops--
+--[[ 0 Tick ]]
+while wait() do 
+    Neat:Set(FpsText .. UpdateFps)
+    PingLabel:Set(PingText .. PingUpdate)
+    calculatePing()
+end
+
+--[[ 0.5 Tick ]]
 while wait(0.5) do 
     updatePlayerNames()
     selectPlayers:Refresh(playerNames, true)
 end
+--End
+OrionLib:Init()

@@ -1,22 +1,29 @@
+
+-- Values
+local playtimeString = "Playtime: "
+local separator = false
+local PlayerCount = "0/0"
 local plrs = game.Players
 local playerNames = {}
-local selectedPlayer
-local EspLoaded = false
-local FpsText = "Fps: "
---Function
---[[Select players]]
+local startTime = tick()  -- Store the initial time
+local UserInputService = game:GetService("UserInputService")
+local GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+
+-- service
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Function to update player names
 local function updatePlayerNames()
     playerNames = {}
-    local players = plrs:GetPlayers()
-
-    for _, player in ipairs(players) do
+    for _, player in ipairs(plrs:GetPlayers()) do
         table.insert(playerNames, player.Name)
     end
 end
 
---[[Fps]]
-local RunService = game:GetService("RunService")
+spawn(updatePlayerNames)
 
+-- Fps
 local UpdateFps = 0
 local LastTime = tick()
 
@@ -27,52 +34,70 @@ RunService.RenderStepped:Connect(function()
     UpdateFps = math.floor(1 / DeltaTime)
 end)
 
---[[Ping]]
-local PingText = "Ping: "
-local PingUpdate = 0
+-- Update player count
+local function updatePlayerCount()
+    local currentPlayerCount = #plrs:GetPlayers()
+    local maxPlayerCount = game.Players.MaxPlayers
 
-local function calculatePing()
-    local startTime = tick()
-    game:GetService("Players").LocalPlayer:Kick("Ping Test")
-    local endTime = tick()
-    PingUpdate = math.floor((endTime - startTime) * 1000)
+    PlayerCount = currentPlayerCount .. "/" .. maxPlayerCount
+end
+
+-- Function to calculate playtime
+local function calculatePlaytime()
+    local currentTime = tick()
+    local elapsedSeconds = currentTime - startTime
+
+    local days = math.floor(elapsedSeconds / (24 * 60 * 60))
+    local hours = math.floor((elapsedSeconds % (24 * 60 * 60)) / (60 * 60))
+    local minutes = math.floor((elapsedSeconds % (60 * 60)) / 60)
+    local seconds = math.floor(elapsedSeconds % 60)
+
+    return days, hours, minutes, seconds
+end
+
+-- Detect input type
+local function updateDeviceType()
+    local lastInputType = UserInputService:GetLastInputType()
+    if lastInputType == Enum.UserInputType.Touch or lastInputType == Enum.UserInputType.TouchFiveFinger or lastInputType == Enum.UserInputType.TouchTwoFinger then
+        return "Mobile"
+    else
+        return "Computer"
+    end
 end
 -- Library
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/Unknownkellymc1/Orion/main/source')))()
-
 local Sense = loadstring(game:HttpGet('https://sirius.menu/sense'))()
 
 -- Window
-local Window = OrionLib:MakeWindow({Name = "Reaper Hub : [" ..  game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. "]", HidePremium = false, SaveConfig = true, ConfigFolder = "ReaperSaved"})
+
+local Window = OrionLib:MakeWindow({Name = "Reaper Hub : [" .. GameName .. "]", HidePremium = false, SaveConfig = false, ConfigFolder = "ReaperSaved"})
 
 -- Tabs
-local Tab1 = Window:MakeTab({
-    Name = "Universal",
-    Icon = "rbxassetid://7733954760",
-    PremiumOnly = false
-})
-
-local Tab2 = Window:MakeTab({
-    Name = "Esp",
-    Icon = "rbxassetid://7733774602",
-    PremiumOnly = false
-})
-
-local Tab3 = Window:MakeTab({
-    Name = "AimBot",
-    Icon = "rbxassetid://7733765307",
-    PremiumOnly = false
-})
-
-local Tab4 = Window:MakeTab({
-    Name = "Info",
-    Icon = "rbxassetid://7733964719",
-    PremiumOnly = false
-})
+local Tab1 = Window:MakeTab({Name = "Universal", Icon = "rbxassetid://7733954760", PremiumOnly = false})
+local Tab2 = Window:MakeTab({Name = "Esp", Icon = "rbxassetid://7733774602", PremiumOnly = false})
+local Tab3 = Window:MakeTab({Name = "AimBot", Icon = "rbxassetid://7733765307", PremiumOnly = false})
+local Tab4 = Window:MakeTab({Name = "Info", Icon = "rbxassetid://7733964719", PremiumOnly = false})
 
 -- [universal]--
+local Character = Tab1:AddSection({
+    Name = "Character:"
+})
+
+Tab1:AddButton({
+    Name = "Reset Character",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+
+        if character then
+            character:BreakJoints()
+        end
+    end
+})
+
+spawn(updateStats)
 updatePlayerNames()
-local Section1 = Tab1:AddSection({
+local players = Tab1:AddSection({
     Name = "Players:"
 })
 
@@ -86,7 +111,8 @@ local selectPlayers = Tab1:AddDropdown({
     end
 })
 
-local teleportButton = Tab1:AddButton({
+local teleportButton 
+teleportButton = Tab1:AddButton({
     Name = "Teleport",
     Enabled = false,
     Callback = function()
@@ -119,7 +145,7 @@ local copyUserIdButton = Tab1:AddButton({
     end
 })
 
-local Section2 = Tab1:AddSection({
+local Movements = Tab1:AddSection({
     Name = "Movements:"
 })
 local Slider1 = Tab1:AddSlider({
@@ -150,11 +176,11 @@ local Slider2 = Tab1:AddSlider({
 
 local Slider3 = Tab1:AddSlider({
     Name = "Set HipHeight",
-    Min = 2,
+    Min = 1.35,
     Max = 300,
-    Default = 2,
+    Default = 1.35,
     Color = Color3.fromRGB(255, 255, 255),
-    Increment = 1,
+    Increment = 0.5,
     ValueName = "Value",
     Callback = function(hipHeight)
         game.Players.LocalPlayer.Character.Humanoid.HipHeight = hipHeight
@@ -174,7 +200,7 @@ local Slider4 = Tab1:AddSlider({
     end
 })
 
-local Section3 = Tab1:AddSection({
+local ResetMovements = Tab1:AddSection({
     Name = "Resets Movements:"
 })
 Tab1:AddButton({
@@ -194,7 +220,7 @@ Tab1:AddButton({
 Tab1:AddButton({
     Name = "Reset HipHeight",
     Callback = function()
-        Slider3:Set(2)
+        Slider3:Set(1.35)
     end
 })
 Tab1:AddButton({
@@ -210,167 +236,219 @@ Tab1:AddButton({
     Callback = function()
         Slider1:Set(16)
         Slider2:Set(50)
-        Slider3:Set(2)
+        Slider3:Set(1.35)
         Slider4:Set(196.2)
     end
 })
 
-local Section4 = Tab1:AddSection({
+local ToolGui = Tab1:AddSection({
     Name = "Tools Gui:"
 })
 Tab1:AddButton({
-	Name = "Infinite Yield",
-	Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-  	end    
+    Name = "Infinite Yield",
+    Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    end    
 })
 
 Tab1:AddButton({
-	Name = "Dex v4",
-	Callback = function()
-      		getgenv().Key = "Bash"
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Hosvile/Refinement/main/MC%3AIY%20Dex",true))()
-  	end    
+    Name = "Dex v4",
+    Callback = function()
+        getgenv().Key = "Bash"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Hosvile/Refinement/main/MC%3AIY%20Dex",true))()
+    end    
 })
 
 Tab1:AddButton({
-	Name = "Remote Spy",
-	Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RS/main/SimpleSpyMobile"))()
-  	end    
+    Name = "Remote Spy",
+    Callback = function()	loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RS/main/SimpleSpyMobile"))()
+    end    
 })
 
 -- [Esp]--
+local Loader = Tab2:AddSection({
+    Name = "Loader:"
+})
 local EspLoader = Tab2:AddButton({
     Name = "Load",
     Callback = function()
         if EspLoaded then
             OrionLib:MakeNotification({
-	Name = "Esp",
-	Content = "Already Loaded",
-	Image = "rbxassetid://7733658504",
-	Time = 5
-})
-
+                Name = "Esp",
+                Content = "Already Loaded",
+                Image = "rbxassetid://7733658504",
+                Time = 5
+            })
             return
         end
 
         Sense.Load()
         wait(1)
 
-        local Section5 = Tab2:AddSection({
+        Sense.teamSettings.enemy.tracerOutline = false
+        Sense.teamSettings.friendly.tracerOutline = false
+        Sense.teamSettings.enemy.chamsFillColor = { Color3.new(1, 0, 0), 0.5 }
+        Sense.teamSettings.friendly.chamsFillColor = { Color3.new( 0, 0, 1), 0.5 }
+        
+        local Esp = Tab2:AddSection({
             Name = "Esp:"
         })
 
         local Toggle1 = Tab2:AddToggle({
-            Name = "Enable",
+            Name = "Enable Enemy",
             Default = false,
             Callback = function(A)
                 Sense.teamSettings.enemy.enabled = A
-                Sense.teamSettings.friendly.enabled = A
-            end    
+            end
         })
 
-        local Section6 = Tab2:AddSection({
-    Name = "Settings:"
-})
+         local Toggle1 = Tab2:AddToggle({
+            Name = "Enable Teammate",
+            Default = false,
+            Callback = function(A2)
+                Sense.teamSettings.friendly.enabled = A2
+            end
+        })
 
-local Toggle2 = Tab2:AddToggle({
-	Name = "Box",
-	Default = false,
-	Callback = function(B)
-    Sense.teamSettings.enemy.box = B
-    Sense.teamSettings.friendly.box = B
-	end    
-})
 
-local Toggle3 = Tab2:AddToggle({
-	Name = "Chams",
-	Default = false,
-	Callback = function(C)
-		Sense.teamSettings.enemy.chams = C
-       Sense.teamSettings.friendly.chams = C
-	end    
-})
+       local Visual = Tab2:AddSection({
+       Name = "Visual:"
+       })
 
-local Toggle4 = Tab2:AddToggle({
-	Name = "Team Collors",
-	Default = false,
-	Callback = function(D)
-		Sense.sharedSettings.useTeamColor = D
-	end    
-})
 
-local Section7 = Tab2:AddSection({
-    Name = "Size:"
-})
+        local ToggleBox = Tab2:AddToggle({
+            Name = "Box",
+            Default = false,
+            Callback = function(B)
+                Sense.teamSettings.enemy.box3d = B
+                Sense.teamSettings.friendly.box3d = B
+            end
+        })
 
+        local ToggleTracer = Tab2:AddToggle({
+            Name = "Tracer",
+            Default = false,
+            Callback = function(C)
+                Sense.teamSettings.enemy.tracer = C
+                Sense.teamSettings.friendly.tracer = C
+            end
+        })
+
+
+        local ToggleChams = Tab2:AddToggle({
+            Name = "Chams",
+            Default = false,
+            Callback = function(D)
+                Sense.teamSettings.enemy.chams = D
+                Sense.teamSettings.friendly.chams = D
+            end
+        })
+
+
+         local ToggleName = Tab2:AddToggle({
+            Name = "NameShow",
+            Default = false,
+            Callback = function(E)
+                Sense.teamSettings.enemy.name = E
+                Sense.teamSettings.friendly.name = E
+            end
+        })
+
+          local ToggleHealthbar = Tab2:AddToggle({
+            Name = "Health Bar",
+            Default = false,
+            Callback = function(F)
+                Sense.teamSettings.enemy.healthBar = F
+                Sense.teamSettings.friendly.healthBar = F
+            end
+        })
+
+        local Section7 = Tab2:AddSection({
+            Name = "Colors:"
+        })
+
+        local Toggle99 = Tab2:AddToggle({
+            Name = "Team Collor",
+            Default = false,
+            Callback = function(Z)
+                Sense.sharedSettings.useTeamColor = Z
+            end
+        })
+
+        local Section7 = Tab2:AddSection({
+            Name = "Size:"
+        })
 
         local Slider5 = Tab2:AddSlider({
             Name = "Textsize",
             Min = 0,
             Max = 100,
             Default = 13,
-            Color = Color3.fromRGB(255,255,255),
+            Color = Color3.fromRGB(255, 255, 255),
             Increment = 1,
             ValueName = "Size",
-            Callback = function(Z)
-                Sense.sharedSettings.textSize = Z
-            end    
+            Callback = function(s)
+                Sense.sharedSettings.textSize = s
+            end
         })
 
         wait(0.1)
 
         OrionLib:MakeNotification({
-	Name = "Esp Loader",
-	Content = "Loaded",
-	Image = "rbxassetid://7733919427",
-	Time = 5
-})
+            Name = "Esp Loader",
+            Content = "Loaded",
+            Image = "rbxassetid://7733919427",
+            Time = 5
+        })
 
         EspLoaded = true
     end
 })
 
---[Info]--
-local Section6 = Tab4:AddSection({
-    Name = "Device:"
-})
-local Neat = Tab4:AddLabel(FpsText .. UpdateFps)
-local Neat2 = Tab4:AddLabel(PingText .. PingUpdate)
+-- [Info]--
+local Statistic = Tab4:AddSection({
+       Name = "Statistic:"
+       })
+local FpsLabel = Tab4:AddLabel("Fps: " .. UpdateFps)
+local CountPlayerLabel = Tab4:AddLabel("Players: " .. PlayerCount)
+local PlaytimeLabel = Tab4:AddLabel("Playtime: ")
+    local DeviceLabel = Tab4:AddLabel("Device: ")
 
+local SpecialThx = Tab4:AddSection({
+       Name = "Library:"
+       })
 
-local Section6 = Tab4:AddSection({
-    Name = "Game Info:"
-})
-local GameName = Tab4:AddParagraph("Game:", game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-local GameId = Tab4:AddParagraph("Game ID:", game.PlaceId)
-
-local Section6 = Tab4:AddSection({
-    Name = "Copy:"
-})
-Tab4:AddButton({
-    Name = "GameName",
-    Callback = function() setclipboard(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-    end    
-})
-Tab4:AddButton({
-    Name = "GameID",
-    Callback = function()
-        setclipboard(game.PlaceId)
-    end    
-})
-
---loops--
---[[ 0 Tick ]]
-while wait() do 
-    Neat:Set(FpsText .. UpdateFps)
-    PingLabel:Set(PingText .. PingUpdate)
-    calculatePing()
-end
-
---[[ 0.5 Tick ]]
-while wait(0.5) do 
+Tab4:AddParagraph("Orion Library:","Orion Team")
+Tab4:AddParagraph("Mobile suport:","Unknownkellymc1")
+Tab4:AddParagraph("Esp Library:","Unknow")
+Tab4:AddParagraph("AimBot Library:","Zeroox team")
+-- Loops
+while wait() do
+    local deviceType = updateDeviceType()
     updatePlayerNames()
-    selectPlayers:Refresh(playerNames, true)
+    updatePlayerCount()
+
+    local days, hours, minutes, seconds = calculatePlaytime()
+    FpsLabel:Set("FPS: " .. UpdateFps)
+    wait(0.1)
+    DeviceLabel:Set("Device: " .. deviceType)
+    wait(0.1)
+    CountPlayerLabel:Set("Player Count: " .. PlayerCount)
+    wait(0.1)
+
+    local playtimeString = "Playtime: "
+    
+    if days > 0 then
+        playtimeString = playtimeString .. days .. " Days"
+    end
+
+    if hours > 0 or days > 0 then
+        playtimeString = playtimeString .. (days > 0 and ", " or "") .. hours .. " Hours"
+    end
+
+    if minutes > 0 or hours > 0 or days > 0 then
+        playtimeString = playtimeString .. ((hours > 0 or days > 0) and ", " or "") .. minutes .. " Minutes"
+    end
+
+    playtimeString = playtimeString .. ((minutes > 0 or hours > 0 or days > 0) and ", " or "") .. seconds .. " Seconds"
+    PlaytimeLabel:Set(playtimeString)
 end
---End
-OrionLib:Init()
